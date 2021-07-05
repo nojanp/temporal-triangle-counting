@@ -25,10 +25,10 @@ CSRGraph Graph::convertToCSR()
   for(VertexEdgeId i = 0; i < num_edges_; i++)
   {
     csr_graph.nbrs_[i] = edges_[i].dst_;
-    while(cur_vertex <= edges_[i].src_)
+    while(cur_vertex <= edges_[i].src_) // setting the offsets for vertices in the list of neighbors
       csr_graph.offsets_[cur_vertex++] = i;
   }
-  while(cur_vertex <= num_vertices_)
+  while(cur_vertex <= num_vertices_)  // offset for the sequnce of vertices between the vertex with largest ID and the vertex with largest ID with a neighbors
     csr_graph.offsets_[cur_vertex++] = num_edges_;
 
   return csr_graph;
@@ -82,6 +82,11 @@ Graph TemporalGraph::ExtractStaticGraph()
   sortEdges();
   VertexEdgeId num_middler_edges = numberOfStaticDirectedEdges();
   Graph middler(num_vertices_, num_middler_edges);
+  /* in the middler graph the start point of each edge has a smaller ID than the end point.
+   * for all the temporal edges from u to v we will put one static edge (min(u,v), max(u,v))
+   *we do the same for all temporal edges from v to u.
+   */
+  
   VertexEdgeId last_src = -1, last_dsts = -1;
   VertexEdgeId edge_index = 0;
   for (VertexEdgeId i=0; i < num_edges_; i++)
@@ -98,7 +103,7 @@ Graph TemporalGraph::ExtractStaticGraph()
   middler.sortEdges();
 
 
-  // find number of static edges
+  // find number of static edges: one for all temporal edges between {u,v}
   VertexEdgeId num_graph_edges = 0;
   for (VertexEdgeId i=0; i < middler.num_edges_; i++)
   {
@@ -121,6 +126,7 @@ Graph TemporalGraph::ExtractStaticGraph()
   {
     if(middler.edges_[i].src_ != last_src || middler.edges_[i].dst_ != last_dsts)
     {
+      //each edge is stored in both directions in a graph. It will be stored in one direction in CSR format
       graph.edges_[edge_index].src_ = middler.edges_[i].src_;
       graph.edges_[edge_index].dst_ = middler.edges_[i].dst_;
       edge_index++;
@@ -149,10 +155,10 @@ CSRTemporalGraph TemporalGraph::convertToCSR()
     csr_temporal_graph.temporal_nbrs_[i].dst_ = temporal_edges_[i].dst_;
     csr_temporal_graph.temporal_nbrs_[i].time_ = temporal_edges_[i].time_;
     while(cur_vertex <= temporal_edges_[i].src_)
-      csr_temporal_graph.offsets_[cur_vertex++] = i;
+      csr_temporal_graph.offsets_[cur_vertex++] = i; // setting the offsets for vertices in the list of neighbors
   }
   while(cur_vertex <= num_vertices_)
-    csr_temporal_graph.offsets_[cur_vertex++] = num_edges_;
+    csr_temporal_graph.offsets_[cur_vertex++] = num_edges_; // offset for the sequnce of vertices between the vertex with largest ID and the vertex with largest ID with a neighbors
 
   return csr_temporal_graph;
 }
@@ -207,8 +213,8 @@ struct DegreeComparator
 
 void CSRGraph::findDegenOrdering()
 {
-  degen_order_ = new VertexEdgeId[num_vertices_];
-  sort_by_degen_ = new VertexEdgeId[num_vertices_];
+  degen_order_ = new VertexEdgeId[num_vertices_];    // place of each vertex in degeneracy ordering
+  sort_by_degen_ = new VertexEdgeId[num_vertices_];  // vertices sorted by degeneracy ordering
 
   VertexEdgeId *sort_by_deg = new VertexEdgeId[num_vertices_];
   VertexEdgeId *degrees = new VertexEdgeId[num_vertices_];
@@ -440,6 +446,9 @@ void CSRTemporalGraph::relabelByDegenOrder(VertexEdgeId *degen_order, VertexEdge
 
 CSRGraph CSRTemporalGraph::extractMultGraph()
 {
+  // multGraph is a temporary static grraph (DAG). For each edge in multGraph, temporal_start_pos_ indicates
+  // the starting point of sequence of temporal edges corresponding to this static edge
+  
   CSRGraph mult_graph(num_vertices_, numberOfStaticDirectedEdges());
   mult_graph.temporal_start_pos_ = new VertexEdgeId[num_edges_+1];
 
@@ -470,7 +479,7 @@ CSRGraph CSRTemporalGraph::extractMultGraph()
   return mult_graph;
 }
 
-void CSRTemporalGraph::reloadTimes()
+void CSRTemporalGraph::reloadTimes() // writes the timestamp of all temporal edges into the times_ array again (used after sorting the vertices)
 {
   times_ = new VertexEdgeId[num_edges_];
   for (VertexEdgeId i = 0; i < num_edges_; i++)
@@ -529,7 +538,7 @@ VertexEdgeId CSRTemporalGraph::edgeTimeIntervalCount(VertexEdgeId start_pos, Ver
   return last_ind - first_ind;
 }
 
-void CSRTemporalGraph::printTimeSpan()
+void CSRTemporalGraph::printTimeSpan() // prints the time span of the whole temporal graph: max timestmap - min timestamp
 {
   TemporalTime min_time = times_[0];
   TemporalTime max_time = times_[0];
@@ -557,7 +566,7 @@ void CSRTemporalGraph::deleteGraph()
   delete[] times_;
 }
 
-CSRDAG::CSRDAG(CSRGraph &csr_graph)
+CSRDAG::CSRDAG(CSRGraph &csr_graph) // contains two CSR graph where each of them is a DAG. One store the out-edges for each vertex, the other store the in-edges.
 {
   out_edge_dag_ = CSRGraph(csr_graph.num_vertices_, csr_graph.num_edges_/2);
   in_edge_dag_ = CSRGraph(csr_graph.num_vertices_, csr_graph.num_edges_/2);
@@ -596,8 +605,12 @@ CSRDAG::CSRDAG(CSRGraph &csr_graph)
   in_edge_dag_.sortNbrs();
 }
 
-TemporalGraph loadTemporalGraph(const char *path)
+TemporalGraph loadTemporalGraph(const char *path) 
 {
+
+  // reads the input temporal graph from input file. first line includes number of vertices and edges
+  // after that, each line contians a temporal edge in the format (source, destination, timestmap)
+
   FILE* f = fopen(path, "r");
 
   TemporalGraph temporal_graph;

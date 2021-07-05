@@ -6,49 +6,52 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
-    TemporalTime delta = stoi(argv[2]);
-    TemporalTime delta1 = stoi(argv[3]);
-    TemporalTime delta2 = stoi(argv[4]);
+    TemporalTime delta = stoi(argv[2]);  // delta_{1,3} in the paper
+    TemporalTime delta1 = stoi(argv[3]); // delta_{1,2} in the paper
+    TemporalTime delta2 = stoi(argv[4]); // delta_{2,3} in the paper
     
-    if(delta > delta1 + delta2)
-        delta = delta1 + delta2;
-    TemporalGraph temporal_graph = loadTemporalGraph(argv[1]);
+    if(delta > delta1 + delta2)  // difference between first and third edge cannot be more than the sum
+        delta = delta1 + delta2; // of difference between first and second edges and the difference between second and third edges
+
+    TemporalGraph temporal_graph = loadTemporalGraph(argv[1]);  // read the input temporal graph
 
     cout << "Temporal graph loaded." << endl;
     
-    Graph static_graph = temporal_graph.ExtractStaticGraph();
+    Graph static_graph = temporal_graph.ExtractStaticGraph();   // extract the static graph
 
     cout << endl;
     cout << "Static graph extracted." << endl;
 
-    CSRGraph static_csr_graph = static_graph.convertToCSR();
+    CSRGraph static_csr_graph = static_graph.convertToCSR();   // convert the static graph into CSR format
     cout << endl;
     cout << "Static graph converted into CSR format." << endl;
 
-    CSRTemporalGraph csr_temporal_graph = temporal_graph.convertToCSR();
+    CSRTemporalGraph csr_temporal_graph = temporal_graph.convertToCSR();  // convert the input temporal graph into CSR format
     cout << endl;
     cout << "Temporal graph converted into CSR format." << endl;
 
     cout << endl;
     cout << "degeneracy ordering of vertices." << endl;
-    static_csr_graph.findDegenOrdering();
+    static_csr_graph.findDegenOrdering();  // find the degeneracy ordering of the static graph (CSR format)
 
     cout << endl;
     cout << "Relabel vertices of the CSR temporal graph by degeneracy order of the static graph" << endl;
-    csr_temporal_graph.relabelByDegenOrder(static_csr_graph.degen_order_, static_csr_graph.sort_by_degen_);
+    csr_temporal_graph.relabelByDegenOrder(static_csr_graph.degen_order_, static_csr_graph.sort_by_degen_);  // relabel vertices of the temporal graph (CSR format) by the degeneracy ordering of the static graph
 
     cout << endl;
     cout << "Relabel vertices of the static CSR graph by degeneracy order" << endl;
-    static_csr_graph.relabelByDegenOrder();
+    static_csr_graph.relabelByDegenOrder();   // relabel vertices of the static graph (CSR format) by the degenracy ordering of the static graph
 
     cout << endl;
     cout << "CSR static graph converted to CSRDAG" << endl;
-    CSRDAG csr_dag(static_csr_graph);
+    CSRDAG csr_dag(static_csr_graph);  // convert static graph (CSR format) to a DAG. In other words, we orient the static graph w.r.t. its degeneracy ordering.
 
 
     cout << endl;
-    cout << "Degeneracy: " << csr_dag.out_edge_dag_.maxDegree() << endl;
+    cout << "Degeneracy: " << csr_dag.out_edge_dag_.maxDegree() << endl; // max out-degree of the DAG oriented w.r.t. the degeneracy ordering
+                                                                        //  is equal to the degeneracy of the graph
 
+    // Counting temporal triangles for delta, delta_1, and delta_2
     MotifCounter motif_counter;
     motif_counter.countTemporalTriangle(csr_dag.out_edge_dag_, csr_temporal_graph, delta, delta1, delta2);
 
@@ -78,3 +81,5 @@ int main(int argc, char *argv[])
     // cout << "a5" << endl;
     return 0;
  }
+
+ 

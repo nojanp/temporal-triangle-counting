@@ -4,6 +4,61 @@
 
 using namespace std;
 
+//////////////////////////////////////////////////
+//////////////////////////////////////////////////
+// indexing all 64 types of edge counts we need based on the directed static edge we are counting for (eg. uv), directed static edge
+// whose compatible corresponding temporal edges are being counted (eg. vw), and the time interval (eg. [t-delta, t])
+//////////////////////////////////////////////////
+//////////////////////////////////////////////////
+
+
+//     edge_count_index_map["uv on vw: -inf, t"] = 0 * highest_mult; edge_count_index_map["uv on vw: t-delta, t"] = 1 * highest_mult; edge_count_index_map["uv on vw: t, t+delta"] = 2 * highest_mult; edge_count_index_map["uv on vw: t, inf"] = 3 * highest_mult;
+//     edge_count_index_map["uv on wv: -inf, t"] = 4 * highest_mult; edge_count_index_map["uv on wv: t-delta, t"] = 5 * highest_mult; edge_count_index_map["uv on wv: t, t+delta"] = 6 * highest_mult; edge_count_index_map["uv on wv: t, inf"] = 7 * highest_mult;
+//     edge_count_index_map["vu on vw: -inf, t"] = 8 * highest_mult; edge_count_index_map["vu on vw: t-delta, t"] = 9 * highest_mult; edge_count_index_map["vu on vw: t, t+delta"] = 10 * highest_mult; edge_count_index_map["vu on vw: t, inf"] = 11 * highest_mult;
+//     edge_count_index_map["vu on wv: -inf, t"] = 12 * highest_mult; edge_count_index_map["vu on wv: t-delta, t"] = 13 * highest_mult; edge_count_index_map["vu on wv: t, t+delta"] = 14 * highest_mult; edge_count_index_map["vu on wv: t, inf"] = 15 * highest_mult;
+//     edge_count_index_map["uw on vw: -inf, t"] = 16 * highest_mult; edge_count_index_map["uw on vw: t-delta, t"] = 17 * highest_mult; edge_count_index_map["uw on vw: t, t+delta"] = 18 * highest_mult; edge_count_index_map["uw on vw: t, inf"] = 19 * highest_mult;
+//     edge_count_index_map["uw on wv: -inf, t"] = 20 * highest_mult; edge_count_index_map["uw on wv: t-delta, t"] = 21 * highest_mult; edge_count_index_map["uw on wv: t, t+delta"] = 22 * highest_mult; edge_count_index_map["uw on wv: t, inf"] = 23 * highest_mult;
+//     edge_count_index_map["wu on vw: -inf, t"] = 24 * highest_mult; edge_count_index_map["wu on vw: t-delta, t"] = 25 * highest_mult; edge_count_index_map["wu on vw: t, t+delta"] = 26 * highest_mult; edge_count_index_map["wu on vw: t, inf"] = 27 * highest_mult;
+//     edge_count_index_map["wu on wv: -inf, t"] = 28 * highest_mult; edge_count_index_map["wu on wv: t-delta, t"] = 29 * highest_mult; edge_count_index_map["wu on wv: t, t+delta"] = 30 * highest_mult; edge_count_index_map["wu on wv: t, inf"] = 31 * highest_mult;
+    
+
+//     edge_count_index_map["uv on vw: t-delta1, t"] = 32;
+//     edge_count_index_map["uv on wv: t-delta1, t"] = 33;
+//     edge_count_index_map["vu on vw: t-delta1, t"] = 34;
+//     edge_count_index_map["vu on wv: t-delta1, t"] = 35;
+//     edge_count_index_map["uw on vw: t-delta1, t"] = 36;
+//     edge_count_index_map["uw on wv: t-delta1, t"] = 37;
+//     edge_count_index_map["wu on vw: t-delta1, t"] = 38;
+//     edge_count_index_map["wu on wv: t-delta1, t"] = 39;
+
+//     edge_count_index_map["uv on vw: t, t+delta1"] = 40;
+//     edge_count_index_map["uv on wv: t, t+delta1"] = 41;
+//     edge_count_index_map["vu on vw: t, t+delta1"] = 42;
+//     edge_count_index_map["vu on wv: t, t+delta1"] = 43;
+//     edge_count_index_map["uw on vw: t, t+delta1"] = 44;
+//     edge_count_index_map["uw on wv: t, t+delta1"] = 45;
+//     edge_count_index_map["wu on vw: t, t+delta1"] = 46;
+//     edge_count_index_map["wu on wv: t, t+delta1"] = 47;
+
+
+//     edge_count_index_map["uv on vw: t-delta2, t"] = 48;
+//     edge_count_index_map["uv on wv: t-delta2, t"] = 49;
+//     edge_count_index_map["vu on vw: t-delta2, t"] = 50;
+//     edge_count_index_map["vu on wv: t-delta2, t"] = 51;
+//     edge_count_index_map["uw on vw: t-delta2, t"] = 52;
+//     edge_count_index_map["uw on wv: t-delta2, t"] = 53;
+//     edge_count_index_map["wu on vw: t-delta2, t"] = 54;
+//     edge_count_index_map["wu on wv: t-delta2, t"] = 55;
+
+//     edge_count_index_map["uv on vw: t, t+delta2"] = 56;
+//     edge_count_index_map["uv on wv: t, t+delta2"] = 57;
+//     edge_count_index_map["vu on vw: t, t+delta2"] = 58;
+//     edge_count_index_map["vu on wv: t, t+delta2"] = 59;
+//     edge_count_index_map["uw on vw: t, t+delta2"] = 60;
+//     edge_count_index_map["uw on wv: t, t+delta2"] = 61;
+//     edge_count_index_map["wu on vw: t, t+delta2"] = 62;
+//     edge_count_index_map["wu on wv: t, t+delta2"] = 63;
+
 
 void MotifCounter::populateEdgeCount(CSRTemporalGraph &t_graph,
                           VertexEdgeId search_for_start_pos,
@@ -19,6 +74,7 @@ void MotifCounter::populateEdgeCount(CSRTemporalGraph &t_graph,
                           VertexEdgeId minus_delta2,
                           VertexEdgeId plus_delta2)
 {
+
 
     for (VertexEdgeId t_pos = search_for_start_pos; t_pos < search_for_end_pos; t_pos++)
     {   
@@ -88,7 +144,7 @@ void MotifCounter::populateEdgeCount(CSRTemporalGraph &t_graph,
 }
 
 
-
+// \pi_1 and \pi_2 as explained in the paper
 Count MotifCounter::countCaseA(CSRTemporalGraph &t_graph,
                             VertexEdgeId t1_start_pos, VertexEdgeId t1_end_pos,
                             VertexEdgeId t2_start_pos, VertexEdgeId t2_end_pos,
@@ -146,6 +202,7 @@ Count MotifCounter::countCaseA(CSRTemporalGraph &t_graph,
 
 }
 
+// \pi_3 and \pi_4 as explained in the paper
 Count MotifCounter::countCaseB(CSRTemporalGraph &t_graph,
                             VertexEdgeId t1_start_pos, VertexEdgeId t1_end_pos,
                             VertexEdgeId t2_start_pos, VertexEdgeId t2_end_pos,
@@ -247,6 +304,7 @@ Count MotifCounter::countCaseB(CSRTemporalGraph &t_graph,
 
 }
 
+// \pi_5 and \pi_6 as explained in the paper
 Count MotifCounter::countCaseC(CSRTemporalGraph &t_graph,
                             VertexEdgeId t1_start_pos, VertexEdgeId t1_end_pos,
                             VertexEdgeId t2_start_pos, VertexEdgeId t2_end_pos,
@@ -321,9 +379,10 @@ void MotifCounter::countTemporalTriangle(CSRGraph &s_dag, CSRTemporalGraph &t_gr
     delta1_ = delta1;
     delta2_ = delta2;
 
+    // we have 64 different types of edge counts as shown at the top of page
     VertexEdgeId index_array[64];
     for(int i=0; i < 64; i++)
-        index_array[i] = i * highest_mult;
+        index_array[i] = i * highest_mult; // for each type of edge count we reserve highest_mult many spaces.
 
 
     for (VertexEdgeId i=0; i < s_dag.num_vertices_; i++)
@@ -342,6 +401,8 @@ void MotifCounter::countTemporalTriangle(CSRGraph &s_dag, CSRTemporalGraph &t_gr
                 if(w_index == -1)
                     continue;
                 
+                // we are looking at satic triangle <u,v,w>
+
                 static_triangles_count_++;
                               
 
@@ -353,6 +414,7 @@ void MotifCounter::countTemporalTriangle(CSRGraph &s_dag, CSRTemporalGraph &t_gr
                 VertexEdgeId mult_graph_indx_w_v = mult_graph.getEdgeIndx(w, v);
 
 
+                // starting point of temporal edges corresponding to each edge for example (u,v)
                 VertexEdgeId start_pos_u_v = mult_graph_indx_u_v == -1 ? -1 : mult_graph.temporal_start_pos_[mult_graph_indx_u_v];
                 VertexEdgeId start_pos_u_w = mult_graph_indx_u_w == -1 ? -1 : mult_graph.temporal_start_pos_[mult_graph_indx_u_w];
                 VertexEdgeId start_pos_v_u = mult_graph_indx_v_u == -1 ? -1 : mult_graph.temporal_start_pos_[mult_graph_indx_v_u];
@@ -420,6 +482,9 @@ void MotifCounter::countTemporalTriangle(CSRGraph &s_dag, CSRTemporalGraph &t_gr
                 populateEdgeCount(t_graph, start_pos_w_u, end_pos_w_u, start_pos_w_v, end_pos_w_v,
                                 index_array[28], index_array[29], index_array[30], index_array[31], index_array[39], index_array[47], index_array[55], index_array[63]);
 
+
+                // Dir Di is the equivalent of ordering \rho_i in the paper 
+                // Mi is Triangle (motif) of type i: \Tau_i in the paper
 
                 // %%%%%%%%%%%%%%%%%%%%%%%%%                
                 //Case A1 (\pi_1)
@@ -1026,6 +1091,7 @@ void MotifCounter::countTemporalTriangle(CSRGraph &s_dag, CSRTemporalGraph &t_gr
     // "  D5: " << motif_counts_[5][4] << "  D6: " << motif_counts_[5][5] << "  D7: " << motif_counts_[5][6] << "  D8: " << motif_counts_[5][7] << endl;
 
 
+    // getting the counts for each temporal triangle type from the counts for different temporal orderings and orientations 
     motif_type_counts_[0] = motif_counts_[0][7] + motif_counts_[1][5] + motif_counts_[2][2] + motif_counts_[3][0] + motif_counts_[4][1] + motif_counts_[5][4];
     motif_type_counts_[1] = motif_counts_[0][5] + motif_counts_[1][7] + motif_counts_[2][1] + motif_counts_[3][4] + motif_counts_[4][2] + motif_counts_[5][0];
     motif_type_counts_[2] = motif_counts_[0][4] + motif_counts_[1][1] + motif_counts_[2][0] + motif_counts_[3][2] + motif_counts_[4][5] + motif_counts_[5][7];

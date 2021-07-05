@@ -20,9 +20,9 @@ class MotifCounter
     
     Count static_triangles_count_ = 0;
 
-    Count motif_type_counts_[8] = {0};
-    Count motif_counts_[6][8] = {0};
-    Count triangle_motif_counts_[6][8] = {0};
+    Count motif_type_counts_[8] = {0};  // counts of each temporal triangle type
+    Count motif_counts_[6][8] = {0};  // at row i column j: motif counts for temporal ordering i and orientation j
+    Count triangle_motif_counts_[6][8] = {0}; // motif counts for the static triangle being processed
     
     // void populateEdgeCountIndexMap(VertexEdgeId highest_mult);
     void populateEdgeCount(CSRTemporalGraph &t_graph,
